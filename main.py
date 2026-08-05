@@ -8,11 +8,16 @@ import os
 from time import sleep
 
 
+
 load_dotenv()
 USERNAME = os.environ['USERNAME_LOGIN']
 EMAIL = os.environ['EMAIL_LOGIN']
 PASSWORD = os.environ['PASS_LOGIN']
-tweetsToCheck = 15
+
+SUBS = os.environ['SUBSCRIPTIONS'].split(',')
+tweetsToCheck = 15 #per user
+
+
 # Initialize client
 client = Client('en-US', impersonate='chrome124')
 
@@ -21,32 +26,40 @@ async def main():
 
     await client.is_logged_in()
 
+    print(f"Subscribed to: {SUBS}")
+
     to_download = []
 
-    user = await client.get_user_by_screen_name('isitmeagainwow')
-    print(user)
-    tweets = []
-    _tweets = await client.get_user_tweets(user.id, 'Tweets', count=15)
-    for tweet in _tweets:
-        if (tweet.retweeted_tweet):
-            tweets.append(tweet.retweeted_tweet)
-
-    
-    while len(tweets) < tweetsToCheck:
-        sleep(3)
-        print(f"Fetching new tweets. Currently at {len(tweets)}.")
-        _tweets = await _tweets.next()
+    for subscribed_user in SUBS:
+        user = await client.get_user_by_screen_name(subscribed_user)
+        print(f"Tackling @{subscribed_user}.")
+        tweets = []
+        _tweets = await client.get_user_tweets(user.id, 'Tweets', count=15)
         for tweet in _tweets:
-            if tweet.retweeted_tweet:
+            if (tweet.retweeted_tweet):
                 tweets.append(tweet.retweeted_tweet)
-        print(f"Fetched new tweets: {len(tweets)} tweets total.")
+            else:
+                tweets.append(tweet)
+        print(f"Fetched new tweets: {len(tweets)} tweets total from {subscribed_user}.")
+
+        
+        while len(tweets) < tweetsToCheck:
+            sleep(3)
+            print(f"Fetching new tweets. Currently at {len(tweets)}.")
+            _tweets = await _tweets.next()
+            for tweet in _tweets:
+                if tweet.retweeted_tweet:
+                    tweets.append(tweet.retweeted_tweet)
+                else:
+                    tweets.append(tweet)
+            print(f"Fetched new tweets: {len(tweets)} tweets total from {subscribed_user}.")
 
 
-    for tweet in tweets:
-        if tweet.media:
-            for file in tweet.media:
-                to_download.append(file.url)
-    
+        for tweet in tweets:
+            if tweet.media:
+                for file in tweet.media:
+                    to_download.append(file.url)
+        
     i = 0
     print(f"{len(to_download)} medias available for downloading.")
     for fileurl in to_download:

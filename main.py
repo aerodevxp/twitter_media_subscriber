@@ -10,9 +10,6 @@ from time import sleep
 
 
 load_dotenv()
-USERNAME = os.environ['USERNAME_LOGIN']
-EMAIL = os.environ['EMAIL_LOGIN']
-PASSWORD = os.environ['PASS_LOGIN']
 
 SUBS = os.environ['SUBSCRIPTIONS'].split(',')
 tweetsToCheck = int(os.environ['TWEET_AMOUNT']) #per user. set to 0 to always fetch all available tweets.

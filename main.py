@@ -58,7 +58,7 @@ async def main():
                 print(f"Fetched new tweets: {len(tweets)} tweets total from {subscribed_user}.")
         else:
             while len(tweets) < tweetsToCheck and len(tweets) < user.statuses_count:
-                sleep(3)
+                sleep(10)
                 print(f"Fetching new tweets. Currently at {len(tweets)}.")
                 _tweets = await _tweets.next()
                 for tweet in _tweets:

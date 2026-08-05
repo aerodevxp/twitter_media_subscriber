@@ -15,7 +15,7 @@ EMAIL = os.environ['EMAIL_LOGIN']
 PASSWORD = os.environ['PASS_LOGIN']
 
 SUBS = os.environ['SUBSCRIPTIONS'].split(',')
-tweetsToCheck = 15 #per user
+tweetsToCheck = int(os.environ['TWEET_AMOUNT']) #per user. set to 0 to always fetch all available tweets.
 
 
 # Initialize client
@@ -34,7 +34,11 @@ async def main():
         user = await client.get_user_by_screen_name(subscribed_user)
         print(f"Tackling @{subscribed_user}.")
         tweets = []
-        _tweets = await client.get_user_tweets(user.id, 'Tweets', count=15)
+        _count = 15
+        if tweetsToCheck <= 15 and tweetsToCheck >= 1:
+            _count = tweetsToCheck
+        
+        _tweets = await client.get_user_tweets(user.id, 'Tweets', count=_count)
         for tweet in _tweets:
             if (tweet.retweeted_tweet):
                 tweets.append(tweet.retweeted_tweet)
@@ -42,17 +46,31 @@ async def main():
                 tweets.append(tweet)
         print(f"Fetched new tweets: {len(tweets)} tweets total from {subscribed_user}.")
 
+        print(f"{subscribed_user} has {user.statuses_count} tweets. The script will fetch tweets until all are fetched or your set limit is reached.")
         
-        while len(tweets) < tweetsToCheck:
-            sleep(3)
-            print(f"Fetching new tweets. Currently at {len(tweets)}.")
-            _tweets = await _tweets.next()
-            for tweet in _tweets:
-                if tweet.retweeted_tweet:
-                    tweets.append(tweet.retweeted_tweet)
-                else:
-                    tweets.append(tweet)
-            print(f"Fetched new tweets: {len(tweets)} tweets total from {subscribed_user}.")
+        if tweetsToCheck < 1:
+            while len(tweets) < user.statuses_count:
+                sleep(10)
+                print(f"Fetching new tweets. Currently at {len(tweets)}.")
+                _tweets = await _tweets.next()
+                for tweet in _tweets:
+                    if tweet.retweeted_tweet:
+                        tweets.append(tweet.retweeted_tweet)
+                    else:
+                        tweets.append(tweet)
+                print(f"Fetched new tweets: {len(tweets)} tweets total from {subscribed_user}.")
+        else:
+            while len(tweets) < tweetsToCheck and len(tweets) < user.statuses_count:
+                sleep(3)
+                print(f"Fetching new tweets. Currently at {len(tweets)}.")
+                _tweets = await _tweets.next()
+                for tweet in _tweets:
+                    if tweet.retweeted_tweet:
+                        tweets.append(tweet.retweeted_tweet)
+                    else:
+                        tweets.append(tweet)
+                print(f"Fetched new tweets: {len(tweets)} tweets total from {subscribed_user}.")
+            
 
 
         for tweet in tweets:

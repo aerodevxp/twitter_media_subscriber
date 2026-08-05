@@ -1,2 +1,3 @@
 yt-dlp
 dotenv
+curl_cffi
